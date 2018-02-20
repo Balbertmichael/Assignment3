@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 /**
  * This is the sample test cases for students
- * @author lisahua
+ * @author Albert Bautista
  *
  */
 public class WordLadderTester {
