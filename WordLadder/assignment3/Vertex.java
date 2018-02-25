@@ -6,11 +6,13 @@ public class Vertex {
 	private String name;
 	private int index;
 	private ArrayList<Vertex> adjList;
+	private Vertex prev;
 
 	public Vertex(String name) {
 		this.name = name;
 		index = 0;
 		adjList = new ArrayList<Vertex>();
+		prev = null;
 	}
 
 	public String checkAdjacency(Vertex word) {
@@ -46,8 +48,10 @@ public class Vertex {
 		if(index == adjList.size()) {
 			return null;
 		}
-		int retInd = index++;
-		return adjList.get(retInd);
+		int retInd = index;
+		index++;
+		Vertex retVert = adjList.get(retInd);
+		return retVert;
 	}
 
 	public ArrayList<Vertex> getAdjList() {
@@ -60,5 +64,13 @@ public class Vertex {
 	
 	public int getIndex() {
 		return index;
+	}
+	
+	public void setPrev(Vertex v) {
+		prev = v;
+	}
+	
+	public Vertex getPrev() {
+		return prev;
 	}
 }

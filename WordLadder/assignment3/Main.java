@@ -21,10 +21,11 @@ public class Main {
 		Set<String> dict;
 		int upperBound;
 
-		public wordLadder(String start, String end) {
+		public wordLadder(String start, String end, int upperBound) {
 			this.start = start;
 			this.end = end;
 			this.dict = new HashSet<String>();
+			this.upperBound = upperBound;
 		}
 	}
 
@@ -53,7 +54,7 @@ public class Main {
 				String start = words.get(0).toUpperCase(), end = words.get(1).toUpperCase();
 				ArrayList<String> dfsLadder = getWordLadderDFS(start, end), bfsLadder = getWordLadderBFS(start, end);
 				printLadder(dfsLadder);
-				printLadder(bfsLadder);
+			    printLadder(bfsLadder);
 			}
 		} while (!words.isEmpty());
 		// TODO methods to read in words, output ladder
@@ -84,10 +85,12 @@ public class Main {
 	public static ArrayList<String> getWordLadderDFS(String start, String end) {
 		// Returned list should be ordered start to end. Include start and end.
 		// If ladder is empty, return list with just start and end.
+		start = start.toUpperCase();
+		end = end.toUpperCase();
 		Set<String> dict = makeDictionary();
 		Vertex startVertex = wordGraph(dict, start, end);
-		wordLadder word = new wordLadder(start, end);
-		ArrayList<String> ladder = dfs(word, startVertex);
+		wordLadder word = new wordLadder(start, end, 50);
+		ArrayList<String> ladder = dfs(word, startVertex, 0);
 		if (ladder == null) {
 			ladder = new ArrayList<String>();
 			ladder.add(start);
@@ -103,13 +106,45 @@ public class Main {
 	}
 
 	public static ArrayList<String> getWordLadderBFS(String start, String end) {
-
+		start = start.toUpperCase();
+		end = end.toUpperCase();
 		// TODO some code
 		Set<String> dict = makeDictionary();
 		// TODO more code
-		ArrayList<String> ret = new ArrayList<String>();
-		Vertex startVertex = wordGraph(dict, start, end);
-		return ret; // replace this line later with real return
+		ArrayList<String> ladder = new ArrayList<String>();
+		Vertex v = wordGraph(dict, start, end);
+		Queue<Vertex> find = new LinkedList<Vertex>();
+		find.add(v);
+		while (!find.isEmpty()) {
+			Vertex node = find.remove();
+			if(node == null) {
+				continue;
+			}
+			if(node.getName().equals(end)) {
+				ladder = bfsBacktrack(node, ladder);
+				HashSet<String> chkDupes = new HashSet<String>();
+				for (String s : ladder) {
+					if (!chkDupes.add(s)) {
+						System.out.println("Duplicate: " + s);
+					}
+				}
+				return ladder;
+			}
+			if (!dict.remove(node.getName())) {
+				continue;
+			}
+			Vertex neighbor = node.getNextFromAdjList();
+			while (neighbor != null) {
+				if(dict.contains(neighbor.getName())) {
+					find.add(neighbor);
+					neighbor.setPrev(node);
+				}
+				neighbor = node.getNextFromAdjList();
+			}
+		}
+		ladder.add(start);
+		ladder.add(end);
+		return ladder; // replace this line later with real return
 	}
 
 	/**
@@ -119,10 +154,14 @@ public class Main {
 	 *            The ladder to be printed out to console
 	 */
 	public static void printLadder(ArrayList<String> ladder) {
-		System.out.println("a " + (ladder.size() - 2) + "-rung ladder exists between " + ladder.get(0) + " and "
-				+ ladder.get(ladder.size() - 1) + ".");
-		for (int i = 0; i < ladder.size(); ++i) {
-			System.out.println(ladder.get(i));
+		if (ladder.size() == 2) {
+			System.out.println("no word ladder can be found between " + ladder.get(0).toLowerCase() + " and " + ladder.get(1).toLowerCase());
+		} else {
+			System.out.println("a " + (ladder.size() - 2) + "-rung ladder exists between " + ladder.get(0) + " and "
+					+ ladder.get(ladder.size() - 1) + ".");
+			for (int i = 0; i < ladder.size(); ++i) {
+				System.out.println(ladder.get(i));
+			}
 		}
 	}
 
@@ -173,8 +212,8 @@ public class Main {
 		return match;
 	}
 
-	private static ArrayList<String> dfs(wordLadder ladder, Vertex v) {
-		if (v != null) {
+	private static ArrayList<String> dfs(wordLadder ladder, Vertex v, int depth) {
+		if (v != null && depth < ladder.upperBound) {
 			if (v.getName() == ladder.start) {
 				ArrayList<String> emptyLadder = new ArrayList<String>();
 				emptyLadder.add(ladder.start);
@@ -186,14 +225,14 @@ public class Main {
 				found.add(v.getName());
 				return found;
 			}
-
 			if (!ladder.dict.contains(v.getName())) {
 				ladder.dict.add(v.getName());
-				ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList());
+				ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList(), ++depth);
+				--depth;
 				if (findEnd == null) {
 					if (v.getIndex() < v.getAdjList().size()) {
 						ladder.dict.remove(v.getName());
-						return dfs(ladder, v);
+						return dfs(ladder, v, depth);
 					}
 				} else {
 					findEnd.add(0, v.getName());
@@ -202,6 +241,15 @@ public class Main {
 			}
 		}
 		return null;
+	}
+	
+	private static ArrayList<String> bfsBacktrack(Vertex endVertex, ArrayList<String> retArray){
+		Vertex v = endVertex;
+		while(v != null) {
+			retArray.add(0,v.getName());
+			v = v.getPrev();
+		}
+		return retArray;
 	}
 
 	/* Do not modify makeDictionary */
