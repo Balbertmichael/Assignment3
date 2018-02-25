@@ -15,16 +15,18 @@ import java.util.*;
 import java.io.*;
 
 public class Main {
-	private static class wordLadder{
+	private static class wordLadder {
 		String start;
 		String end;
 		Set<String> dict;
+
 		public wordLadder(String start, String end) {
 			this.start = start;
 			this.end = end;
 			this.dict = new HashSet<String>();
 		}
 	}
+
 	// static variables and constants only here.
 	static String[] test = { "smart", "start", "stars", "soars", "soaks", "socks", "cocks", "conks", "cones", "coney",
 			"money" };
@@ -84,7 +86,13 @@ public class Main {
 		Set<String> dict = makeDictionary();
 		Vertex startVertex = wordGraph(dict, start, end);
 		wordLadder word = new wordLadder(start, end);
-		return dfs(word, startVertex);
+		ArrayList<String> ladder = dfs(word, startVertex);
+		if (ladder == null) {
+			ladder = new ArrayList<String>();
+			ladder.add(start);
+			ladder.add(end);
+		}
+		return ladder;
 	}
 
 	public static ArrayList<String> getWordLadderBFS(String start, String end) {
@@ -159,44 +167,28 @@ public class Main {
 	}
 
 	private static ArrayList<String> dfs(wordLadder ladder, Vertex v) {
-		if (v == null) {
-			if(v.getName() == ladder.start) {
-				ArrayList<String> emptyLadder = new ArrayList<String>();
-				emptyLadder.add(ladder.start);
-				emptyLadder.add(ladder.end);
-				return emptyLadder;
+		if (v != null) {
+			if (v.getName().equals(ladder.end)) {
+				ArrayList<String> found = new ArrayList<String>();
+				found.add(v.getName());
+				return found;
 			}
-			return null;
-		}
-		if (v.getName().equals(ladder.end)) {
-			ArrayList<String> found = new ArrayList<String>();
-			found.add(v.getName());
-			return found;
-		}
-		
-		if (!ladder.dict.contains(v.getName())) {
-			ladder.dict.add(v.getName());
-			ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList());
-			if (findEnd == null) {
-				if(v.getIndex() < v.getAdjList().size()) {
-					ladder.dict.remove(v.getName());
-					return dfs(ladder, v);
-				}
-				else {
-					return null;
+			for (Vertex list = v.getNextFromAdjList(); list != null; list = v.getNextFromAdjList()) {
+				if (!ladder.dict.contains(list.getName())) {
+					ladder.dict.add(list.getName());
+					ArrayList<String> findEnd = dfs(ladder, list);
+					if (findEnd == null) {
+						ladder.dict.remove(list.getName());
+						return dfs(ladder, list);
+					} else {
+						findEnd.add(0, v.getName());
+						return findEnd;
+					}
 				}
 			}
-			else {
-				findEnd.add(0, v.getName());
-				return findEnd;
-			}
 		}
-		else {
-			return null;
-		}
+		return null;
 	}
-	
-
 
 	/* Do not modify makeDictionary */
 	public static Set<String> makeDictionary() {
