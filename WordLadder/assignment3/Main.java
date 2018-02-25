@@ -19,6 +19,7 @@ public class Main {
 		String start;
 		String end;
 		Set<String> dict;
+		int upperBound;
 
 		public wordLadder(String start, String end) {
 			this.start = start;
@@ -91,6 +92,12 @@ public class Main {
 			ladder = new ArrayList<String>();
 			ladder.add(start);
 			ladder.add(end);
+		}
+		HashSet<String> chkDupes = new HashSet<String>();
+		for(String s:ladder) {
+			if(!chkDupes.add(s)) {
+				System.out.println("Duplicate: " + s);
+			}
 		}
 		return ladder;
 	}
@@ -173,18 +180,20 @@ public class Main {
 				found.add(v.getName());
 				return found;
 			}
-
-			if (!ladder.dict.contains(v.getName())) {
-				ladder.dict.add(v.getName());
-				ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList());
-				if (findEnd == null) {
-					if (v.getIndex() < v.getAdjList().size()) {
-						ladder.dict.remove(v.getName());
-						return dfs(ladder, v);
-					}
-				} else {
-					findEnd.add(0, v.getName());
-					return findEnd;
+			ladder.dict.add(v.getName());
+			for(int i = v.getIndex(); i < v.getAdjList().size(); i = v.mutateIndex()) {
+				if(ladder.dict.contains(v.getAdjList().get(i).getName())) {
+					continue;
+				}
+				ladder.dict.add(v.getAdjList().get(i).getName());
+				ArrayList<String> find = dfs(ladder, v.getNextFromAdjList());
+				if(find == null) {
+					ladder.dict.remove(v.getAdjList().get(i).getName());
+					continue;
+				}
+				else {
+					find.add(0, v.getName());
+					return find;
 				}
 			}
 		}

@@ -61,4 +61,8 @@ public class Vertex {
 	public int getIndex() {
 		return index;
 	}
+	
+	public int mutateIndex() {
+		return ++index;
+	}
 }
