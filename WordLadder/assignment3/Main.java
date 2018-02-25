@@ -88,14 +88,14 @@ public class Main {
 		Vertex startVertex = wordGraph(dict, start, end);
 		wordLadder word = new wordLadder(start, end);
 		ArrayList<String> ladder = dfs(word, startVertex);
-		if(ladder == null) {
+		if (ladder == null) {
 			ladder = new ArrayList<String>();
 			ladder.add(start);
 			ladder.add(end);
 		}
 		HashSet<String> chkDupes = new HashSet<String>();
-		for(String s:ladder) {
-			if(!chkDupes.add(s)) {
+		for (String s : ladder) {
+			if (!chkDupes.add(s)) {
 				System.out.println("Duplicate: " + s);
 			}
 		}
@@ -175,25 +175,29 @@ public class Main {
 
 	private static ArrayList<String> dfs(wordLadder ladder, Vertex v) {
 		if (v != null) {
+			if (v.getName() == ladder.start) {
+				ArrayList<String> emptyLadder = new ArrayList<String>();
+				emptyLadder.add(ladder.start);
+				emptyLadder.add(ladder.end);
+				return emptyLadder;
+			}
 			if (v.getName().equals(ladder.end)) {
 				ArrayList<String> found = new ArrayList<String>();
 				found.add(v.getName());
 				return found;
 			}
-			ladder.dict.add(v.getName());
-			for(int i = v.getIndex(); i < v.getAdjList().size(); i = v.mutateIndex()) {
-				if(ladder.dict.contains(v.getAdjList().get(i).getName())) {
-					continue;
-				}
-				ladder.dict.add(v.getAdjList().get(i).getName());
-				ArrayList<String> find = dfs(ladder, v.getNextFromAdjList());
-				if(find == null) {
-					ladder.dict.remove(v.getAdjList().get(i).getName());
-					continue;
-				}
-				else {
-					find.add(0, v.getName());
-					return find;
+
+			if (!ladder.dict.contains(v.getName())) {
+				ladder.dict.add(v.getName());
+				ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList());
+				if (findEnd == null) {
+					if (v.getIndex() < v.getAdjList().size()) {
+						ladder.dict.remove(v.getName());
+						return dfs(ladder, v);
+					}
+				} else {
+					findEnd.add(0, v.getName());
+					return findEnd;
 				}
 			}
 		}
