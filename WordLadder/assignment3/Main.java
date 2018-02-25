@@ -12,15 +12,23 @@ package assignment3;
 
 import java.util.*;
 
-import javax.swing.text.html.HTMLDocument.Iterator;
-
 import java.io.*;
 
 public class Main {
-
+	private static class wordLadder{
+		String start;
+		String end;
+		Set<String> dict;
+		public wordLadder(String start, String end, Set<String> dict) {
+			this.start = start;
+			this.end = end;
+			this.dict = dict;
+		}
+	}
 	// static variables and constants only here.
 	static String[] test = { "smart", "start", "stars", "soars", "soaks", "socks", "cocks", "conks", "cones", "coney",
 			"money" };
+	final static ArrayList<String> notDone = new ArrayList<String>();
 
 	public static void main(String[] args) throws Exception {
 		Scanner kb; // input Scanner for commands
@@ -78,6 +86,7 @@ public class Main {
 		ArrayList<String> ret = new ArrayList<String>();
 		Vertex startVertex = wordGraph(dict, start, end);
 		// TODO more code
+		wordLadder word = new wordLadder(start, end, dict);
 		ret = dfs(start, end, dict, startVertex);
 		return ret; // replace this line later with real return
 	}
@@ -128,15 +137,13 @@ public class Main {
 			for (Vertex v : graph.values()) {
 				String edge = addVertex.checkAdjacency(v);
 				if (edge != null) {
-					int sMatch = numMatch(edge, start), eMatch = numMatch(edge, end);
-					if (sMatch < eMatch) {
-						sMatch = eMatch;
-					}
-					addVertex.addEdge(v, sMatch);
+					int eMatch = numMatch(edge, end);
+					addVertex.addEdge(v, eMatch);
 				}
 			}
 			graph.put(s, addVertex);
 		}
+		Vertex test = graph.get("JAMBE");
 		return graph.get(start);
 	}
 
@@ -156,19 +163,31 @@ public class Main {
 	}
 
 	private static ArrayList<String> dfs(String start, String end, Set<String> dict, Vertex v) {
+		if (v == null) {
+			return null;
+		}
 		if (dict.contains(v.getName())) {
-			if (v == null) {
-				return null;
-			}
+			dict.remove(v.getName());
 			if (v.getName().compareTo(end) == 0) {
 				ArrayList<String> found = new ArrayList<String>();
 				found.add(v.getName());
 				return found;
 			}
-			ArrayList<String> findEnd = dfs(start, end, dict, v.getNextFromAdjList());
+			Vertex next = v.getNextFromAdjList();
+			if(next == null) {
+				return null;
+			}
+			ArrayList<String> findEnd = dfs(start, end, dict, next);
 			if (findEnd == null) {
-				return dfs(start, end, dict, v.getNextFromAdjList());
-			} else {
+				if(v.getIndex() < v.getAdjList().size()) {
+					dict.add(v.getName());
+					return dfs(start, end, dict, v);
+				}
+				else {
+					return null;
+				}
+			}
+			else {
 				findEnd.add(0, v.getName());
 				return findEnd;
 			}
@@ -177,6 +196,8 @@ public class Main {
 			return null;
 		}
 	}
+	
+
 
 	/* Do not modify makeDictionary */
 	public static Set<String> makeDictionary() {

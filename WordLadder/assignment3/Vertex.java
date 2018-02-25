@@ -23,7 +23,7 @@ public class Vertex {
 				}
 			} 
 			else {
-				if (name.substring(i + 1) == word.getName().substring(i + 1)) {
+				if (name.substring(i + 1).compareTo(word.getName().substring(i + 1)) == 0) {
 					return '_' + name.substring(i);
 				}
 			}
