@@ -173,6 +173,7 @@ public class Main {
 			found.add(v.getName());
 			return found;
 		}
+		
 		if (!ladder.dict.contains(v.getName())) {
 			ladder.dict.add(v.getName());
 			ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList());
