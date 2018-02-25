@@ -19,10 +19,10 @@ public class Main {
 		String start;
 		String end;
 		Set<String> dict;
-		public wordLadder(String start, String end, Set<String> dict) {
+		public wordLadder(String start, String end) {
 			this.start = start;
 			this.end = end;
-			this.dict = dict;
+			this.dict = new HashSet<String>();
 		}
 	}
 	// static variables and constants only here.
@@ -81,14 +81,10 @@ public class Main {
 	public static ArrayList<String> getWordLadderDFS(String start, String end) {
 		// Returned list should be ordered start to end. Include start and end.
 		// If ladder is empty, return list with just start and end.
-		// TODO some code
 		Set<String> dict = makeDictionary();
-		ArrayList<String> ret = new ArrayList<String>();
 		Vertex startVertex = wordGraph(dict, start, end);
-		// TODO more code
-		wordLadder word = new wordLadder(start, end, dict);
-		ret = dfs(start, end, dict, startVertex);
-		return ret; // replace this line later with real return
+		wordLadder word = new wordLadder(start, end);
+		return dfs(word, startVertex);
 	}
 
 	public static ArrayList<String> getWordLadderBFS(String start, String end) {
@@ -162,26 +158,28 @@ public class Main {
 		return match;
 	}
 
-	private static ArrayList<String> dfs(String start, String end, Set<String> dict, Vertex v) {
+	private static ArrayList<String> dfs(wordLadder ladder, Vertex v) {
 		if (v == null) {
+			if(v.getName() == ladder.start) {
+				ArrayList<String> emptyLadder = new ArrayList<String>();
+				emptyLadder.add(ladder.start);
+				emptyLadder.add(ladder.end);
+				return emptyLadder;
+			}
 			return null;
 		}
-		if (dict.contains(v.getName())) {
-			dict.remove(v.getName());
-			if (v.getName().compareTo(end) == 0) {
-				ArrayList<String> found = new ArrayList<String>();
-				found.add(v.getName());
-				return found;
-			}
-			Vertex next = v.getNextFromAdjList();
-			if(next == null) {
-				return null;
-			}
-			ArrayList<String> findEnd = dfs(start, end, dict, next);
+		if (v.getName().equals(ladder.end)) {
+			ArrayList<String> found = new ArrayList<String>();
+			found.add(v.getName());
+			return found;
+		}
+		if (!ladder.dict.contains(v.getName())) {
+			ladder.dict.add(v.getName());
+			ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList());
 			if (findEnd == null) {
 				if(v.getIndex() < v.getAdjList().size()) {
-					dict.add(v.getName());
-					return dfs(start, end, dict, v);
+					ladder.dict.remove(v.getName());
+					return dfs(ladder, v);
 				}
 				else {
 					return null;
