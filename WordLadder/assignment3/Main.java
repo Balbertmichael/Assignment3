@@ -91,30 +91,30 @@ public class Main {
 		// Returned list should be ordered start to end. Include start and end.
 		// If ladder is empty, return list with just start and end.
 		ArrayList<String> bfsfind, ladder;
-		do {
+	//	do {
 		Set<String> dict = makeDictionary();
 		
-		int index = rand.nextInt(dict.size()), index2 = rand.nextInt(dict.size());
-		Iterator<String> iter = dict.iterator();
-		for(int i = 0; i < index; ++i) {
-			iter.next();
-		}
-		start = iter.next();
-		Iterator<String> iter2 = dict.iterator();
-		for(int i = 0; i < index2; ++i) {
-			iter2.next();
-		}
-		end  = iter2.next();
+//		int index = rand.nextInt(dict.size()), index2 = rand.nextInt(dict.size());
+//		Iterator<String> iter = dict.iterator();
+//		for(int i = 0; i < index; ++i) {
+//			iter.next();
+//		}
+//		start = iter.next();
+//		Iterator<String> iter2 = dict.iterator();
+//		for(int i = 0; i < index2; ++i) {
+//			iter2.next();
+//		}
+//		end  = iter2.next();
 		
 		start = start.toUpperCase();
 		end = end.toUpperCase();
 		
 		ArrayList<Vertex> v = wordGraph(dict, start, end);
-		bfsfind = getWordLadderBFS(start, end);
-		printLadder(bfsfind);
-		int testBound = bfsfind.size();
-		System.out.println(testBound);
-		wordLadder word = new wordLadder(start, end, testBound + 10, v.get(0), v.get(1));
+//		bfsfind = getWordLadderBFS(start, end);
+//		printLadder(bfsfind);
+//		int testBound = bfsfind.size();
+//		System.out.println(testBound);
+		wordLadder word = new wordLadder(start, end, setUpperBound, v.get(0), v.get(1));
 		ladder = dfs(word, word.startVertex, 0);
 		if (ladder == null) {
 			ladder = new ArrayList<String>();
@@ -127,7 +127,7 @@ public class Main {
 				System.out.println("Duplicate: " + s);
 			}
 		}
-		} while ((bfsfind.size() > 2 && ladder.size() > 2) || (bfsfind.size() == 2 && ladder.size() == 2));
+//		} while ((bfsfind.size() > 2 && ladder.size() > 2) || (bfsfind.size() == 2 && ladder.size() == 2));
 		return ladder;
 	}
 
