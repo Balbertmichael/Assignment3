@@ -36,7 +36,7 @@ public class Main {
 	// static variables and constants only here.
 	static String[] test = { "smart", "start", "stars", "soars", "soaks", "socks", "cocks", "conks", "cones", "coney",
 			"money" };
-	static int setUpperBound = 100;
+	final static int setUpperBound = 75;
 	final static Random rand = new Random();
 
 	public static void main(String[] args) throws Exception {
@@ -60,6 +60,7 @@ public class Main {
 				ArrayList<String> dfsLadder = getWordLadderDFS(start, end), bfsLadder = getWordLadderBFS(start, end);
 				printLadder(dfsLadder);
 			    printLadder(bfsLadder);
+			    //break;
 			}
 		} while (!words.isEmpty());
 		// TODO methods to read in words, output ladder
@@ -91,8 +92,10 @@ public class Main {
 		// Returned list should be ordered start to end. Include start and end.
 		// If ladder is empty, return list with just start and end.
 		ArrayList<String> bfsfind, ladder;
+		int numTest = 0;
 		do {
 		Set<String> dict = makeDictionary();
+		++numTest;
 		
 		int index = rand.nextInt(dict.size()), index2 = rand.nextInt(dict.size());
 		Iterator<String> iter = dict.iterator();
@@ -114,13 +117,14 @@ public class Main {
 		printLadder(bfsfind);
 		int testBound = bfsfind.size();
 		System.out.println(testBound);
-		wordLadder word = new wordLadder(start, end, testBound + 5, v.get(0), v.get(1));
+		wordLadder word = new wordLadder(start, end, setUpperBound, v.get(0), v.get(1));
 		ladder = dfs(word, word.startVertex, 0);
 		if (ladder == null) {
 			ladder = new ArrayList<String>();
 			ladder.add(start);
 			ladder.add(end);
 		}
+		System.out.println("Length of DFS: " + ladder.size());
 		HashSet<String> chkDupes = new HashSet<String>();
 		for (String s : ladder) {
 			if (!chkDupes.add(s)) {
@@ -128,11 +132,13 @@ public class Main {
 			}
 		}
 		} while ((bfsfind.size() > 2 && ladder.size() > 2) || (bfsfind.size() == 2 && ladder.size() == 2));
+		System.out.println(numTest - 1 + " passed tests");
 		return ladder;
 	}
 
 	public static ArrayList<String> getWordLadderBFS(String start, String end) {
 		Set<String> dict = makeDictionary();
+		
 //		int index = rand.nextInt(dict.size()), index2 = rand.nextInt(dict.size());
 //		Iterator<String> iter = dict.iterator();
 //		for(int i = 0; i < index; ++i) {
@@ -144,6 +150,7 @@ public class Main {
 //			iter2.next();
 //		}
 //		end  = iter2.next();
+		
 		start = start.toUpperCase();
 		end = end.toUpperCase();
 		ArrayList<String> ladder = new ArrayList<String>();
@@ -217,36 +224,28 @@ public class Main {
 
 	private static ArrayList<Vertex> wordGraph(Set<String> dict, String start, String end) {
 		Hashtable<String, Vertex> graph = new Hashtable<String, Vertex>();
+		Vertex endVertex = new Vertex(end, end);
+		graph.put(end, endVertex);
 		for (String s : dict) {
-			Vertex addVertex = new Vertex(s);
+			if(s.equals(end)) {
+				continue;
+			}
+			Vertex addVertex = new Vertex(s, end);
 			for (Vertex v : graph.values()) {
 				String edge = addVertex.checkAdjacency(v);
 				if (edge != null) {
-					int eMatch = numMatch(edge, end);
-					addVertex.addEdge(v, eMatch);
+					addVertex.addEdge(v);
 				}
 			}
 			graph.put(s, addVertex);
+		}
+		for(Vertex v : graph.values()) {
+				v.getAdjList().sort(new SortVertexByWeight());
 		}
 		ArrayList<Vertex> v = new ArrayList<Vertex>();
 		v.add(graph.get(start));
 		v.add(graph.get(end));
 		return v;
-	}
-
-	private static int numMatch(String vertWord, String searchWord) {
-		int lowerBound = 0, match = 0;
-		if (vertWord.length() > searchWord.length()) {
-			lowerBound = searchWord.length();
-		} else {
-			lowerBound = vertWord.length();
-		}
-		for (int i = 0; i < lowerBound; ++i) {
-			if (vertWord.charAt(i) == searchWord.charAt(i)) {
-				match++;
-			}
-		}
-		return match;
 	}
 
 	private static ArrayList<String> dfs(wordLadder ladder, Vertex v, int depth) {
@@ -263,15 +262,23 @@ public class Main {
 			if (!ladder.dict.contains(v.getName())) {
 				ladder.dict.add(v.getName());
 				ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList(), depth + 1);
-//				if(v.getName().equals("HEROS")) {
-//					int test = 0;
-//					System.out.println("Test");
-//				};
+
+				ladder.dict.remove(v.getName());
+				
+				if(v.getName().equals("QUITS")) {
+				//	System.out.println("Test");
+				};
 				if (findEnd == null) {
 					if (v.getIndex() < v.getAdjList().size()) {
-						ladder.dict.remove(v.getName());
 						findEnd = dfs(ladder, v, depth);
 						return findEnd;
+					}
+					else {
+						if(v.getName().equals(ladder.start)) {
+							return null;
+						}
+						ladder.dict.add(v.getName());
+						v.resetIndex();
 					}
 				} else {
 					findEnd.add(0, v.getName());
