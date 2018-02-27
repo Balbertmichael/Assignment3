@@ -22,6 +22,7 @@ public class Main {
 		int upperBound;
 		Vertex startVertex;
 		Vertex endVertex;
+		int iterations;
 
 		public wordLadder(String start, String end, int upperBound, Vertex startVertex, Vertex endVertex) {
 			this.start = start;
@@ -30,13 +31,14 @@ public class Main {
 			this.upperBound = upperBound;
 			this.startVertex = startVertex;
 			this.endVertex = endVertex;
+			iterations = 0;
 		}
 	}
 
 	// static variables and constants only here.
 	static String[] test = { "smart", "start", "stars", "soars", "soaks", "socks", "cocks", "conks", "cones", "coney",
 			"money" };
-	final static int setUpperBound = 75;
+	final static int setUpperBound = 150;
 	final static Random rand = new Random();
 
 	public static void main(String[] args) throws Exception {
@@ -97,17 +99,17 @@ public class Main {
 		Set<String> dict = makeDictionary();
 		++numTest;
 		
-		int index = rand.nextInt(dict.size()), index2 = rand.nextInt(dict.size());
-		Iterator<String> iter = dict.iterator();
-		for(int i = 0; i < index; ++i) {
-			iter.next();
-		}
-		start = iter.next();
-		Iterator<String> iter2 = dict.iterator();
-		for(int i = 0; i < index2; ++i) {
-			iter2.next();
-		}
-		end  = iter2.next();
+//		int index = rand.nextInt(dict.size()), index2 = rand.nextInt(dict.size());
+//		Iterator<String> iter = dict.iterator();
+//		for(int i = 0; i < index; ++i) {
+//			iter.next();
+//		}
+//		start = iter.next();
+//		Iterator<String> iter2 = dict.iterator();
+//		for(int i = 0; i < index2; ++i) {
+//			iter2.next();
+//		}
+//		end  = iter2.next();
 		
 		start = start.toUpperCase();
 		end = end.toUpperCase();
@@ -138,7 +140,7 @@ public class Main {
 
 	public static ArrayList<String> getWordLadderBFS(String start, String end) {
 		Set<String> dict = makeDictionary();
-		
+
 //		int index = rand.nextInt(dict.size()), index2 = rand.nextInt(dict.size());
 //		Iterator<String> iter = dict.iterator();
 //		for(int i = 0; i < index; ++i) {
@@ -249,6 +251,12 @@ public class Main {
 	}
 
 	private static ArrayList<String> dfs(wordLadder ladder, Vertex v, int depth) {
+//		if(ladder.iterations == Integer.MAX_VALUE) {
+//			return null;
+//		}
+//		else {
+//			ladder.iterations++;
+//		}
 		if (v != null) {
 			if(depth >= ladder.upperBound) {
 				return null;
@@ -260,29 +268,40 @@ public class Main {
 				return found;
 			}
 			if (!ladder.dict.contains(v.getName())) {
-				ladder.dict.add(v.getName());
-				ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList(), depth + 1);
-
-				ladder.dict.remove(v.getName());
-				
-				if(v.getName().equals("QUITS")) {
-				//	System.out.println("Test");
-				};
-				if (findEnd == null) {
-					if (v.getIndex() < v.getAdjList().size()) {
-						findEnd = dfs(ladder, v, depth);
-						return findEnd;
+//				ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList(), depth + 1);
+//				ladder.dict.remove(v.getName());
+//				
+//				if(v.getName().equals("QUITS")) {
+//				//	System.out.println("Test");
+//				};
+//				if (findEnd == null) {
+//					if (v.getIndex() < v.getAdjList().size()) {
+//						findEnd = dfs(ladder, v, depth);
+//						return findEnd;
+//					}
+//					else {
+//						if(v.getName().equals(ladder.start)) {
+//							return null;
+//						}
+//						ladder.dict.add(v.getName());
+//						v.resetIndex();
+//					}
+//				} else {
+//					findEnd.add(0, v.getName());
+//					return findEnd;
+//				}
+				ArrayList<Vertex> currList = v.getAdjList();
+				for(int i = 0; i < currList.size(); ++i) {
+					ladder.dict.add(v.getName());
+					ArrayList<String> ret = dfs(ladder, currList.get(i), depth + 1);
+					ladder.dict.remove(v.getName());
+					if(ret == null) {
+						continue;
 					}
 					else {
-						if(v.getName().equals(ladder.start)) {
-							return null;
-						}
-						ladder.dict.add(v.getName());
-						v.resetIndex();
+						ret.add(0, v.getName());
+						return ret;
 					}
-				} else {
-					findEnd.add(0, v.getName());
-					return findEnd;
 				}
 			}
 		}
