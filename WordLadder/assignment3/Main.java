@@ -13,33 +13,41 @@ package assignment3;
 import java.util.*;
 
 import java.io.*;
-
+/**
+ * This class runs the wordLadder for BFS and DFS
+ * @author Albert Bautista
+ * @version 1.0
+ */
 public class Main {
+	/**
+	 * This private class was made to store whatever the ladders needed
+	 * for passing to recursive functions
+	 * @author Albert Bautista
+	 * 
+	 */
 	private static class wordLadder {
-		String start;
 		String end;
 		Set<String> dict;
 		int upperBound;
-		Vertex startVertex;
-		Vertex endVertex;
 		int iterations;
-
-		public wordLadder(String start, String end, int upperBound, Vertex startVertex, Vertex endVertex) {
-			this.start = start;
+		/**
+		 * It takes in all the values needed to pass into the recursive wordladder
+		 * and sets up control flow like previous word list and cap on iterations for faster time
+		 * @param end Necessary to check if the vertex matches the goal word
+		 * @param upperBound Sets a limit to the depth to avoid stack overflow
+		 */
+		public wordLadder(String end, int upperBound, int iterations) {
 			this.end = end;
 			this.dict = new HashSet<String>();
 			this.upperBound = upperBound;
-			this.startVertex = startVertex;
-			this.endVertex = endVertex;
-			iterations = 0;
+			this.iterations = iterations;
 		}
 	}
 
 	// static variables and constants only here.
-	static String[] test = { "smart", "start", "stars", "soars", "soaks", "socks", "cocks", "conks", "cones", "coney",
-			"money" };
-	final static int setUpperBound = 150;
+	final static int SET_HIGHEST_BOUND = 150; //Constant to set initial bound
 	final static Random rand = new Random();
+	final static int NO_ITERATIONS = -1;
 
 	public static void main(String[] args) throws Exception {
 		Scanner kb; // input Scanner for commands
@@ -62,10 +70,8 @@ public class Main {
 				ArrayList<String> dfsLadder = getWordLadderDFS(start, end), bfsLadder = getWordLadderBFS(start, end);
 				printLadder(dfsLadder);
 			    printLadder(bfsLadder);
-			    //break;
 			}
 		} while (!words.isEmpty());
-		// TODO methods to read in words, output ladder
 	}
 
 	public static void initialize() {
@@ -89,104 +95,87 @@ public class Main {
 		}
 		return ret;
 	}
-
+	/**
+	 * This methods implements depth first search for the word ladder
+	 * @param start Start of the word ladder
+	 * @param end End or goal of the word ladder
+	 * @return Either the word ladder if it exists or an empty 2 rung ladder with just the start and end
+	 */
 	public static ArrayList<String> getWordLadderDFS(String start, String end) {
 		// Returned list should be ordered start to end. Include start and end.
 		// If ladder is empty, return list with just start and end.
-		ArrayList<String> bfsfind, ladder;
-		int numTest = 0;
-		do {
+		ArrayList<String> ladder; //Placed for the return ladder b/c running multiple dfs using different bounds to check
 		Set<String> dict = makeDictionary();
-		++numTest;
 		
-//		int index = rand.nextInt(dict.size()), index2 = rand.nextInt(dict.size());
-//		Iterator<String> iter = dict.iterator();
-//		for(int i = 0; i < index; ++i) {
-//			iter.next();
-//		}
-//		start = iter.next();
-//		Iterator<String> iter2 = dict.iterator();
-//		for(int i = 0; i < index2; ++i) {
-//			iter2.next();
-//		}
-//		end  = iter2.next();
-		
-		start = start.toUpperCase();
+		start = start.toUpperCase(); //Uppercase both to match dict since all words in dict are upper case
 		end = end.toUpperCase();
 		
-		ArrayList<Vertex> v = wordGraph(dict, start, end);
-		bfsfind = getWordLadderBFS(start, end);
-		printLadder(bfsfind);
-		int testBound = bfsfind.size();
-		System.out.println(testBound);
-		wordLadder word = new wordLadder(start, end, setUpperBound, v.get(0), v.get(1));
-		ladder = dfs(word, word.startVertex, 0);
+		Vertex startVertex = wordGraph(dict, start, end); //Takes just the startVertex from the wordGraph to get rid of not needed nodes in graph
+		
+		wordLadder word = new wordLadder(end, SET_HIGHEST_BOUND, 0);
+		//Setting max depth with iterations to bound runtime
+		//Setting a higher upper bound and iterating on lower bounds if 150 depth is taking too long
+		ladder = dfs(word, startVertex, 0);
+		int [] bounds = {25, 50, 75}; //Starting really low and going up to have less effect on runtime
+		for(int i = 0; i < bounds.length; ++i) {
+			if(ladder != null) {
+				break; //Basically tries to keep pushing for the presence of a word ladder 
+				//That's why I left the bounds pretty small
+			}
+			System.out.println("Trying different bound: " + bounds[i]); //Error checking output
+			word = new wordLadder(end, bounds[i], NO_ITERATIONS); //Also with pruning with depth the ladder gets very inconsistent but runtime is short
+			ladder = dfs(word, startVertex, 0);
+		}
+		
 		if (ladder == null) {
-			ladder = new ArrayList<String>();
+			ladder = new ArrayList<String>(); //Handles the empty ladder case because dfs returns null for empty ladders
 			ladder.add(start);
 			ladder.add(end);
 		}
-		System.out.println("Length of DFS: " + ladder.size());
-		HashSet<String> chkDupes = new HashSet<String>();
-		for (String s : ladder) {
-			if (!chkDupes.add(s)) {
-				System.out.println("Duplicate: " + s);
-			}
-		}
-		} while ((bfsfind.size() > 2 && ladder.size() > 2) || (bfsfind.size() == 2 && ladder.size() == 2));
-		System.out.println(numTest - 1 + " passed tests");
+
 		return ladder;
 	}
-
+	/**
+	 * This method implements breadth first search to find connecting wordLadders
+	 * Though doesn't optimize for best word ladder just first word ladder found
+	 * So tradeoff for shortest word ladder with the fastest word ladder with bfs
+	 * @param start Start of the word ladder
+	 * @param end End of the word ladder
+	 * @return ArrayList with the word ladder empty if wordLadder cannot be found
+	 */
 	public static ArrayList<String> getWordLadderBFS(String start, String end) {
 		Set<String> dict = makeDictionary();
-
-//		int index = rand.nextInt(dict.size()), index2 = rand.nextInt(dict.size());
-//		Iterator<String> iter = dict.iterator();
-//		for(int i = 0; i < index; ++i) {
-//			iter.next();
-//		}
-//		start = iter.next();
-//		Iterator<String> iter2 = dict.iterator();
-//		for(int i = 0; i < index2; ++i) {
-//			iter2.next();
-//		}
-//		end  = iter2.next();
-		
 		start = start.toUpperCase();
 		end = end.toUpperCase();
 		ArrayList<String> ladder = new ArrayList<String>();
-		ArrayList<Vertex> v = wordGraph(dict, start, end);
+		Vertex startVertex = wordGraph(dict, start, end);
 		Queue<Vertex> find = new LinkedList<Vertex>();
-		find.add(v.get(0));
+		find.add(startVertex); //Adding to initialize queue to search for
 		while (!find.isEmpty()) {
 			Vertex node = find.remove();
 			if(node == null) {
 				continue;
 			}
 			if(node.getName().equals(end)) {
-				ladder = bfsBacktrack(node, ladder);
-//				HashSet<String> chkDupes = new HashSet<String>();
-//				for (String s : ladder) {
-//					if (!chkDupes.add(s)) {
-//						System.out.println("Duplicate: " + s);
-//					}
-//				}
+				ladder = bfsBacktrack(node, ladder); //Returns first ladder found
 				return ladder;
 			}
+			//Using the dictionary remove boolean return to serve dual purposes
+			//First remove the node if it exists in dictionary to not encounter again
+			//Second to skip the encounter beyond the first one
 			if (!dict.remove(node.getName())) {
-				continue;
+				continue; 
 			}
-			Vertex neighbor = node.getNextFromAdjList();
+			Vertex neighbor = node.getNextFromAdjList(); 
 			while (neighbor != null) {
 				if(dict.contains(neighbor.getName())) {
 					find.add(neighbor);
 					neighbor.setPrev(node);
 				}
-				neighbor = node.getNextFromAdjList();
+				neighbor = node.getNextFromAdjList(); //If at the bounds of adjList neighber = null
 			}
 		}
-		ladder.add(start);
+		ladder.add(start); //Default if wordLadder can't be found
 		ladder.add(end);
 		return ladder;
 	}
@@ -209,29 +198,17 @@ public class Main {
 		}
 	}
 
-	// TODO
 	// Other private static methods here
-
-//	/**
-//	 * Function to call to test ArrayList<String>
-//	 * 
-//	 * @param ret
-//	 *            The ArrayList to be changed to a constant
-//	 */
-//	private static void stringTester(ArrayList<String> ret) {
-//		for (String s : test) {
-//			ret.add(s);
-//		}
-//	}
-
-	private static ArrayList<Vertex> wordGraph(Set<String> dict, String start, String end) {
+	/**
+	 * This private method builds a graph by implementing an adjacency list due to sparse connections
+	 * @param dict The set of words to pull from
+	 * @param start The start word to send back the startVertex from the map
+	 * @param end The end word to calculate the weight of the vertex by comparing the vertex name with the endWord
+	 * @return The startVertex to traverse the graph with
+	 */
+	private static Vertex wordGraph(Set<String> dict, String start, String end) {
 		Hashtable<String, Vertex> graph = new Hashtable<String, Vertex>();
-		Vertex endVertex = new Vertex(end, end);
-		graph.put(end, endVertex);
 		for (String s : dict) {
-			if(s.equals(end)) {
-				continue;
-			}
 			Vertex addVertex = new Vertex(s, end);
 			for (Vertex v : graph.values()) {
 				String edge = addVertex.checkAdjacency(v);
@@ -244,68 +221,59 @@ public class Main {
 		for(Vertex v : graph.values()) {
 				v.getAdjList().sort(new SortVertexByWeight());
 		}
-		ArrayList<Vertex> v = new ArrayList<Vertex>();
-		v.add(graph.get(start));
-		v.add(graph.get(end));
-		return v;
+		return graph.get(start);
 	}
-
+	/**
+	 * This private method is the helper recursive function that getWordLadderBFS calls
+	 * @param ladder Object that holds static variables needed to traverse the graph
+	 * @param v Vertex with the start word to traverse the graph
+	 * @param depth Basically a check to not get too deep into the graph that would lead to stack overflow
+	 * @return ArrayList with either null if nothing is found or the wordLadder connecting words start and end 
+	 */
 	private static ArrayList<String> dfs(wordLadder ladder, Vertex v, int depth) {
-//		if(ladder.iterations == Integer.MAX_VALUE) {
-//			return null;
-//		}
-//		else {
-//			ladder.iterations++;
-//		}
-		if (v != null) {
-			if(depth >= ladder.upperBound) {
-				return null;
+		if(ladder.iterations >= 0) {
+			if(++ladder.iterations == Integer.MAX_VALUE) {
+				return null; //Sets an iteration to reduce seemingly never-ending runtime issue
 			}
-			if (v.getAdjList().contains(ladder.endVertex)) {
+		}
+		
+		if (v != null) {
+			
+			if (v.getName().equals(ladder.end)) {
 				ArrayList<String> found = new ArrayList<String>();
 				found.add(v.getName());
-				found.add(ladder.end);
 				return found;
 			}
+			
+			if(depth >= ladder.upperBound) {
+				return null; //Implemented to stop function from running forever due to breadth of graph
+			}
+			
 			if (!ladder.dict.contains(v.getName())) {
-//				ArrayList<String> findEnd = dfs(ladder, v.getNextFromAdjList(), depth + 1);
-//				ladder.dict.remove(v.getName());
-//				
-//				if(v.getName().equals("QUITS")) {
-//				//	System.out.println("Test");
-//				};
-//				if (findEnd == null) {
-//					if (v.getIndex() < v.getAdjList().size()) {
-//						findEnd = dfs(ladder, v, depth);
-//						return findEnd;
-//					}
-//					else {
-//						if(v.getName().equals(ladder.start)) {
-//							return null;
-//						}
-//						ladder.dict.add(v.getName());
-//						v.resetIndex();
-//					}
-//				} else {
-//					findEnd.add(0, v.getName());
-//					return findEnd;
-//				}
 				ArrayList<Vertex> currList = v.getAdjList();
 				for(int i = 0; i < currList.size(); ++i) {
-					ladder.dict.add(v.getName());
+					
+					ladder.dict.add(v.getName()); //Bars from repeating words but has a weird pruning effect because of having a depth bound
 					ArrayList<String> ret = dfs(ladder, currList.get(i), depth + 1);
-					ladder.dict.remove(v.getName());
-					if(ret == null) {
-						continue;
+					
+					if(ladder.iterations >= 0) {
+						//This removes the strange pruning if the word is found at a lower depth but stops due to depth bounds
+						//Implemented only at highest bound
+						ladder.dict.remove(v.getName()); 
 					}
-					else {
+					
+					if(ret != null) {
 						ret.add(0, v.getName());
 						return ret;
 					}
+					
 				}
 			}
+			
 		}
-		return null;
+		
+		return null; //Default case to return for any event that doesn't meet find the wordLadder
+		
 	}
 	
 	private static ArrayList<String> bfsBacktrack(Vertex endVertex, ArrayList<String> retArray){
@@ -316,7 +284,7 @@ public class Main {
 		}
 		return retArray;
 	}
-
+	
 	/* Do not modify makeDictionary */
 	public static Set<String> makeDictionary() {
 		Set<String> words = new HashSet<String>();
