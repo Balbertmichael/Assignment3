@@ -10,9 +10,9 @@ import java.util.*;
  * @version 1.0
  */
 public class Vertex {
-	private String name;
+	private String name; // Word name to check for
 	private int index; // Index used to move through adjList while bounded
-	private ArrayList<Vertex> adjList;
+	private ArrayList<Vertex> adjList; // Adjacency list to represent graph
 	private Vertex prev; // prev vertex used for BFS implementation
 	private int weight; // Weight for sorting words closer to the solution
 
@@ -23,7 +23,7 @@ public class Vertex {
 	 * @param name
 	 *            Word of the vertex
 	 * @param endWord
-	 *            Word used to calculate weight for the instantiated Vertex
+	 *            Word used to compare and calculate the weight for the instantiated Vertex
 	 */
 	public Vertex(String name, String endWord) {
 		this.name = name;
@@ -120,7 +120,9 @@ public class Vertex {
 	 *            vertex to set prev to
 	 */
 	public void setPrev(Vertex v) {
-		prev = v;
+		if(prev == null) {
+			prev = v;
+		}
 	}
 
 	/**
@@ -139,5 +141,11 @@ public class Vertex {
 	 */
 	public int getWeight() {
 		return weight;
+	}
+	
+	public void setLowerWeight(int oWeight) {
+		if(oWeight - 1 > weight) {
+			weight = oWeight - 1;
+		}
 	}
 }

@@ -50,7 +50,6 @@ public class Main2 {
 			printLadder(dfsLadder);
 			printLadder(bfsLadder);
 		}
-		// TODO methods to read in words, output ladder
 	}
 
 	public static ArrayList<String> testgetWordLadderDFS(String start, String end) {
@@ -59,6 +58,7 @@ public class Main2 {
 		ArrayList<String> bfsfind, ladder;
 		int numTest = 0;
 		do {
+			ladder = null;
 			Set<String> dict = makeDictionary();
 			++numTest;
 
@@ -82,22 +82,25 @@ public class Main2 {
 			printLadder(bfsfind);
 			int testBound = bfsfind.size();
 			System.out.println("Length of BFS: " + testBound);
-			wordLadder word = new wordLadder(start, end, setUpperBound, v.get(0), v.get(1));
-			ladder = dfsWithIterLimit(word, word.startVertex, 0);
-			int[] bounds = { 25, 50, 75 };
-			for (int i = 0; i < bounds.length; ++i) {
+			wordLadder word;
+			for (int bounds = 25; bounds <= 150; bounds += 5) {
 				if (ladder != null) {
 					break;
 				}
-				System.out.println("Trying smaller bound: " + bounds[i]);
-				word = new wordLadder(start, end, bounds[i], v.get(0), v.get(1));
+				System.out.println("Trying smaller bound: " + bounds);
+				word = new wordLadder(start, end, bounds, v.get(0), v.get(1));
 				ladder = dfs(word, word.startVertex, 0);
+			}
+			if(ladder == null) {
+				word = new wordLadder(start, end, setUpperBound, v.get(0), v.get(1));
+				ladder = dfsWithIterLimit(word, word.startVertex, 0);
 			}
 			if (ladder == null) {
 				ladder = new ArrayList<String>();
 				ladder.add(start);
 				ladder.add(end);
 			}
+			printLadder(ladder);
 			System.out.println("Length of DFS: " + ladder.size());
 			HashSet<String> chkDupes = new HashSet<String>();
 			for (String s : ladder) {
@@ -203,18 +206,18 @@ public class Main2 {
 		start = start.toUpperCase();
 		end = end.toUpperCase();
 		ArrayList<String> ladder = new ArrayList<String>();
-		ArrayList<Vertex> v = wordGraph(dict, start, end);
+		Vertex startVertex = wordGraph(dict, start, end).get(0);
 		Queue<Vertex> find = new LinkedList<Vertex>();
-		find.add(v.get(0));
+		find.add(startVertex); // Adding to initialize queue to search for
 		while (!find.isEmpty()) {
 			Vertex node = find.remove();
 			if (node == null) {
 				continue;
 			}
-			if (node.getName().equals(end)) {
-				ladder = bfsBacktrack(node, ladder);
-				return ladder;
-			}
+			
+			// Using the dictionary remove boolean return to serve dual purposes
+			// First remove the node if it exists in dictionary to not encounter again
+			// Second to skip the encounter beyond the first one
 			if (!dict.remove(node.getName())) {
 				continue;
 			}
@@ -223,11 +226,15 @@ public class Main2 {
 				if (dict.contains(neighbor.getName())) {
 					find.add(neighbor);
 					neighbor.setPrev(node);
+					if(neighbor.getName().equals(end)) {
+						ladder = bfsBacktrack(neighbor, ladder);
+						return ladder;
+					}
 				}
-				neighbor = node.getNextFromAdjList();
+				neighbor = node.getNextFromAdjList(); // If at the bounds of adjList neighbor = null
 			}
 		}
-		ladder.add(start);
+		ladder.add(start); // Default if wordLadder can't be found
 		ladder.add(end);
 		return ladder;
 	}
@@ -278,15 +285,18 @@ public class Main2 {
 			}
 			graph.put(s, addVertex);
 		}
+		ArrayList<Vertex> retVertex = new ArrayList<Vertex>();
+		retVertex.add(graph.get(start));
+		retVertex.add(graph.get(end));
+		
+		Vertex endVertex = retVertex.get(1);
+		smartWeight(endVertex);
+		
 		for (Vertex v : graph.values()) {
 			v.getAdjList().sort(new SortVertexByWeight());
 		}
 
-		ArrayList<Vertex> v = new ArrayList<Vertex>();
-		v.add(graph.get(start));
-		v.add(graph.get(end));
-
-		return v;
+		return retVertex;
 	}
 
 	private static ArrayList<String> bfsBacktrack(Vertex endVertex, ArrayList<String> retArray) {
@@ -296,6 +306,31 @@ public class Main2 {
 			v = v.getPrev();
 		}
 		return retArray;
+	}
+	
+	private static void smartWeight(Vertex end) {
+		if(end == null) {
+			return;
+		}
+		Queue<Vertex> parse = new LinkedList<Vertex>();
+		Set<String> dict = new HashSet<String>();
+		end.setLowerWeight(Integer.MAX_VALUE);
+		parse.add(end);
+		while(!parse.isEmpty()) {
+			Vertex parent = parse.remove();
+			if(parent.getName() == null) {
+				continue;
+			}
+			if(!dict.add(parent.getName())) {
+				continue;
+			}
+			for(Vertex child : parent.getAdjList()) {
+				if(!dict.contains(child.getName())) {
+					parse.add(child);
+					child.setLowerWeight(parent.getWeight());
+				}
+			}
+		}
 	}
 
 	/* Do not modify makeDictionary */
