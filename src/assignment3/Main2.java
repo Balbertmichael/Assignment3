@@ -7,6 +7,7 @@ import java.io.*;
 public class Main2 {
 
 	private static class wordLadder {
+		@SuppressWarnings("unused")
 		String start;
 		String end;
 		Set<String> dict;
@@ -293,7 +294,7 @@ public class Main2 {
 		smartWeight(endVertex);
 		
 		for (Vertex v : graph.values()) {
-			v.getAdjList().sort(new SortVertexByWeight());
+			v.getAdjList().sort(new VertexWeightSort());
 		}
 
 		return retVertex;

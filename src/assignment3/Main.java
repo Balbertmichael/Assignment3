@@ -5,7 +5,7 @@ package assignment3;
  * abb2639
  * 15505
  * Slip days used: <0>
- * Git URL:
+ * Git URL: https://github.com/Balbertmichael/Assignment3
  * Spring 2018
  */
 
@@ -30,7 +30,7 @@ public class Main {
 	private static class wordLadder {
 		Set<String> dict; // Used to store previous words that have been seen
 		int upperBound;
-		int iterations;
+		int iterBound; // Making iterations 0 adds a bound to the iterations
 		Vertex endVertex;
 
 		/**
@@ -43,17 +43,18 @@ public class Main {
 		 * @param upperBound
 		 *            Sets a limit to the depth to avoid stack overflow
 		 */
-		public wordLadder(int upperBound, int iterations, Vertex endVertex) {
+		public wordLadder(int upperBound, int iterBound, Vertex endVertex) {
 			this.dict = new HashSet<String>();
 			this.upperBound = upperBound;
-			this.iterations = iterations;
+			this.iterBound = iterBound;
 			this.endVertex = endVertex;
 		}
 	}
 
 	// static variables and constants only here
-	// Constant to set initial bound assuming the stack can handle SET_HIGHEST_BOUND number of stack frames.
-	final static int SET_HIGHEST_BOUND = 75; 
+	// Constant to set initial bound assuming the stack can handle SET_HIGHEST_BOUND
+	// number of stack frames.
+	final static int HIGHEST_BOUND = 150;
 	final static int NO_ITERATIONS = -1;
 	final static int ITERATIONS = 0;
 
@@ -74,8 +75,10 @@ public class Main {
 		do {
 			words = parse(kb);
 			if (!words.isEmpty()) {
-				String start = words.get(0).toUpperCase(), end = words.get(1).toUpperCase();
-				ArrayList<String> dfsLadder = getWordLadderDFS(start, end), bfsLadder = getWordLadderBFS(start, end);
+				String start = words.get(0).toUpperCase();
+				String end = words.get(1).toUpperCase();
+				ArrayList<String> dfsLadder = getWordLadderDFS(start, end);
+				ArrayList<String> bfsLadder = getWordLadderBFS(start, end);
 				printLadder(dfsLadder);
 				printLadder(bfsLadder);
 			}
@@ -126,7 +129,8 @@ public class Main {
 
 		ArrayList<Vertex> v = wordGraph(dict, start, end); // Takes just the startVertex from the wordGraph to get rid
 															// of not needed nodes in graph
-		Vertex startVertex = v.get(0), endVertex = v.get(1);
+		Vertex startVertex = v.get(0);
+		Vertex endVertex = v.get(1);
 		wordLadder word;
 
 		// Starting really low and going up to have less effect on runtime if wordLadder
@@ -134,23 +138,15 @@ public class Main {
 		// Also have different bounds b/c oddly enough having a deeper bound doesn't
 		// affect runtime too much or accuracy
 		// For example, I could have a word that isn't found at 50 but found at 25
-		for (int bounds = 25; bounds <= 150; bounds += 5) {
+		for (int bounds = 25; bounds <= HIGHEST_BOUND; bounds += 5) {
 			if (ladder != null) {
 				break; // Basically tries to keep pushing for the presence of a word ladder
 				// That's why I left the bounds pretty small
 			}
-			System.out.println("Attempting with maximum depth of " + bounds); // Error checking output
+			// System.out.println("Attempting with maximum depth of " + bounds); // Error
+			// checking output
 			word = new wordLadder(bounds, NO_ITERATIONS, endVertex); // Also with pruning with depth the ladder gets
 																		// very inconsistent but runtime is short
-			ladder = dfs(word, startVertex, 0);
-		}
-
-		if (ladder == null) {
-			// Setting a higher upper bound with a limit if pruning depths aren't working
-			// Setting max depth with iterations to bound runtime
-			// Note: This method is the slowest method which is why I left it last as a
-			// cleaner function
-			word = new wordLadder(SET_HIGHEST_BOUND, 0, endVertex);
 			ladder = dfs(word, startVertex, 0);
 		}
 
@@ -161,12 +157,13 @@ public class Main {
 			ladder.add(end);
 		}
 
-//		HashSet<String> chkDupes = new HashSet<String>(); /Error A check to see if there are duplicates in word ladder
-//		for (String s : ladder) {
-//			if (!chkDupes.add(s)) {
-//				System.out.println("Duplicate: " + s);
-//			}
-//		}
+		// HashSet<String> chkDupes = new HashSet<String>(); /Error check to see if
+		// there are duplicates in word ladder
+		// for (String s : ladder) {
+		// if (!chkDupes.add(s)) {
+		// System.out.println("Duplicate: " + s);
+		// }
+		// }
 
 		return ladder;
 	}
@@ -189,30 +186,31 @@ public class Main {
 		ArrayList<String> ladder = new ArrayList<String>();
 		Vertex startVertex = wordGraph(dict, start, end).get(0);
 		Queue<Vertex> find = new LinkedList<Vertex>();
-		find.add(startVertex); // Adding to initialize queue to search for
+		find.add(startVertex);
 		while (!find.isEmpty()) {
-			Vertex node = find.remove();
-			if (node == null) {
+			Vertex cur = find.remove();
+
+			if (cur == null) {
 				continue;
 			}
-			
+
 			// Using the dictionary remove boolean return to serve dual purposes
 			// First remove the node if it exists in dictionary to not encounter again
 			// Second to skip the encounter beyond the first one
-			if (!dict.remove(node.getName())) {
+			if (!dict.remove(cur.getName())) {
 				continue;
 			}
-			Vertex neighbor = node.getNextFromAdjList();
+			Vertex neighbor = cur.getNextFromAdjList();
 			while (neighbor != null) {
 				if (dict.contains(neighbor.getName())) {
 					find.add(neighbor);
-					neighbor.setPrev(node);
-					if(neighbor.getName().equals(end)) {
+					neighbor.setPrev(cur); // Note: setPrev will only set the first cur vertex
+					if (neighbor.getName().equals(end)) {
 						ladder = bfsBacktrack(neighbor, ladder);
 						return ladder;
 					}
 				}
-				neighbor = node.getNextFromAdjList(); // If at the bounds of adjList neighbor = null
+				neighbor = cur.getNextFromAdjList(); // If at the bounds of adjList neighbor = null
 			}
 		}
 		ladder.add(start); // Default if wordLadder can't be found
@@ -268,38 +266,43 @@ public class Main {
 		ArrayList<Vertex> retVertex = new ArrayList<Vertex>();
 		retVertex.add(graph.get(start));
 		retVertex.add(graph.get(end));
-		
+
 		Vertex endVertex = retVertex.get(1);
-		reverseWeightSet(endVertex);
-		
+		setWeightByEnd(endVertex);
+
 		for (Vertex v : graph.values()) {
-			v.getAdjList().sort(new SortVertexByWeight()); //Sorting to optimize depth to find words
+			v.getAdjList().sort(new VertexWeightSort()); // Sorting to optimize depth to find words
 		}
 
 		return retVertex;
 	}
+
 	/**
-	 * Basically breadth first search lite that gives weights to connecting vertexes for easier dfs
+	 * Basically breadth first search lite that gives weights to connecting vertexes
+	 * for easier dfs basically just goes to every first word if the connection
+	 * exists
+	 * 
 	 * @param end
 	 */
-	private static void reverseWeightSet(Vertex end) {
-		if(end == null) {
+	private static void setWeightByEnd(Vertex end) {
+		if (end == null) {
 			return;
 		}
 		Queue<Vertex> parse = new LinkedList<Vertex>();
 		Set<String> dict = new HashSet<String>();
 		end.setLowerWeight(Integer.MAX_VALUE);
 		parse.add(end);
-		while(!parse.isEmpty()) {
+		while (!parse.isEmpty()) {
 			Vertex parent = parse.remove();
-			if(parent.getName() == null) {
+			if (parent.getName() == null) {
+				continue; // If parent is null or dict is already in parent then skip due to null pointer
+							// and redundancy
+			}
+			if (!dict.add(parent.getName())) {
 				continue;
 			}
-			if(!dict.add(parent.getName())) {
-				continue;
-			}
-			for(Vertex child : parent.getAdjList()) {
-				if(!dict.contains(child.getName())) {
+			for (Vertex child : parent.getAdjList()) {
+				if (!dict.contains(child.getName())) {
 					parse.add(child);
 					child.setLowerWeight(parent.getWeight());
 				}
@@ -323,11 +326,11 @@ public class Main {
 	 */
 	private static ArrayList<String> dfs(wordLadder ladder, Vertex v, int depth) {
 
-		if (ladder.iterations >= 0) {
-			if (ladder.iterations == Integer.MAX_VALUE) {
+		if (ladder.iterBound >= 0) {
+			if (ladder.iterBound == Integer.MAX_VALUE) {
 				return null; // Sets an iteration to reduce seemingly never-ending runtime issue
 			} else {
-				ladder.iterations++;
+				ladder.iterBound++;
 			}
 		}
 
@@ -353,7 +356,7 @@ public class Main {
 					ArrayList<String> ret = dfs(ladder, currList.get(i), depth + 1); // Using ret to be able to parse
 																						// through recursive search
 
-					if (ladder.iterations >= 0) {
+					if (ladder.iterBound >= 0) {
 						// This removes the strange pruning if the word is found at a lower depth but
 						// stops due to depth bounds
 						// Implemented only at highest bound
@@ -397,8 +400,7 @@ public class Main {
 		Set<String> words = new HashSet<String>();
 		Scanner infile = null;
 		try {
-			infile = new Scanner(new File(
-					"C:\\Users\\balbe\\OneDrive\\Current_Semester\\EE_422C\\Assignment3\\WordLadder\\five_letter_words.txt"));
+			infile = new Scanner(new File("five_letter_words.txt"));
 		} catch (FileNotFoundException e) {
 			System.out.println("Dictionary File not Found!");
 			e.printStackTrace();

@@ -23,7 +23,8 @@ public class Vertex {
 	 * @param name
 	 *            Word of the vertex
 	 * @param endWord
-	 *            Word used to compare and calculate the weight for the instantiated Vertex
+	 *            Word used to compare and calculate the weight for the instantiated
+	 *            Vertex
 	 */
 	public Vertex(String name, String endWord) {
 		this.name = name;
@@ -42,7 +43,8 @@ public class Vertex {
 
 	/**
 	 * This class compares and returns the string (Inefficient because of earlier
-	 * implementation but it works)
+	 * implementation but it works for what it does) Can be made clearer by doing a
+	 * compare on same letters and checking if the letter is 4
 	 * 
 	 * @param word
 	 *            Vertex to see if they are adjacent
@@ -75,13 +77,14 @@ public class Vertex {
 	 * @param word
 	 */
 	public void addEdge(Vertex word) {
-		// weight = word.setWeight(weight);
 		adjList.add(word);
 		word.getAdjList().add(this);
 	}
 
 	/**
-	 * Bounded index that takes from adjacency list
+	 * Bounded index that takes from adjacency list. Remains of old recursive
+	 * implementation that is still used for getWordLadderBFS(used can be made
+	 * redundant by using getAdjList)
 	 * 
 	 * @return Vertex[index] from adjacency list
 	 */
@@ -117,10 +120,11 @@ public class Vertex {
 	 * Setter used for BFS method
 	 * 
 	 * @param v
-	 *            vertex to set prev to
+	 *            vertex to set prev to or doesn't if the prev Vertex was already
+	 *            set
 	 */
 	public void setPrev(Vertex v) {
-		if(prev == null) {
+		if (prev == null) {
 			prev = v;
 		}
 	}
@@ -142,9 +146,16 @@ public class Vertex {
 	public int getWeight() {
 		return weight;
 	}
-	
+
+	/**
+	 * Setter used to optimize for reverseWeightSet
+	 * 
+	 * @param oWeight
+	 *            takes in a weight if the weight is less than the oWeight param to
+	 *            keep the highest weight for the vertex
+	 */
 	public void setLowerWeight(int oWeight) {
-		if(oWeight - 1 > weight) {
+		if (oWeight - 1 > weight) {
 			weight = oWeight - 1;
 		}
 	}
